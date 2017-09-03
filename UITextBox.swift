@@ -39,11 +39,11 @@ class UITextBox: UITextField {
     @IBInspectable var animateDuration:CGFloat = 0.4
     weak var placeholderLabel:UILabel?
     
-    @NSCopying private var _backgroundColor: UIColor? = nil
+    private var _backgroundColor: UIColor? = nil
     override var backgroundColor: UIColor? {
         set {
             _backgroundColor = newValue
-            super.backgroundColor = self.getHighlightColor(self.highlightState)
+            super.backgroundColor = self.getHighlightColor(state: self.highlightState)
         }
         get {
             return _backgroundColor
@@ -73,11 +73,11 @@ class UITextBox: UITextField {
     var highlightState:UITextBoxHighlightState = .Default {
     didSet {
         if let label = placeholderLabel {
-            setHighlightText(label, state: _highlightState)
+            setHighlightText(label: label, state: _highlightState)
             self.layoutSubviews()
         }
-        UIView.animateWithDuration(NSTimeInterval(animateDuration)) {
-            super.backgroundColor = self.getHighlightColor(self._highlightState)
+        UIView.animate(withDuration: TimeInterval(animateDuration)) {
+            super.backgroundColor = self.getHighlightColor(state: self._highlightState)
             
         }
     }
@@ -100,21 +100,21 @@ class UITextBox: UITextField {
     
     //获得焦点时高亮动画
     override func becomeFirstResponder() -> Bool {
-        return animationFirstResponder(super.becomeFirstResponder())
+        return animationFirstResponder(isFirstResponder: super.becomeFirstResponder())
     }
     
     //失去焦点时取消高亮动画
     override func resignFirstResponder() -> Bool {
-        return animationFirstResponder(super.resignFirstResponder())
+        return animationFirstResponder(isFirstResponder: super.resignFirstResponder())
     }
     
     //
     private func animationFirstResponder(isFirstResponder:Bool) -> Bool {
-        UIView.animateWithDuration(NSTimeInterval(animateDuration)) {
-            let color = self.getHighlightColor(self._highlightState)
+        UIView.animate(withDuration: TimeInterval(animateDuration)) {
+            let color = self.getHighlightColor(state: self._highlightState)
             super.backgroundColor = color
             if let label = self.placeholderLabel {
-                self.setHighlightText(label, state: self._highlightState)
+                self.setHighlightText(label: label, state: self._highlightState)
             }
         }
         return isFirstResponder
@@ -124,23 +124,23 @@ class UITextBox: UITextField {
     //调整子控件布局
     override func layoutSubviews() {
         super.layoutSubviews()
-        let rect = super.placeholderRectForBounds(bounds)
-        if isFirstResponder() {
-            layoutPlaceholderLabel(rect,false)
+        let rect = super.placeholderRect(forBounds: bounds)
+        if isFirstResponder {
+            layoutPlaceholderLabel(rect:rect,false)
         } else if text == nil || text == "" {
-            layoutPlaceholderLabel(rect,true)
+            layoutPlaceholderLabel(rect:rect,true)
         } else {
-            layoutPlaceholderLabel(rect,false)
+            layoutPlaceholderLabel(rect:rect,false)
         }
     }
     
-    override func willMoveToSuperview(newSuperview: UIView!)  {
-        super.willMoveToSuperview(newSuperview)
+    override func willMove(toSuperview newSuperview: UIView!)  {
+        super.willMove(toSuperview: newSuperview)
         if placeholderLabel == nil {
-            let rect = super.placeholderRectForBounds(bounds)
+            let rect = super.placeholderRect(forBounds: bounds)
             let label = UILabel(frame: rect)
             label.font = self.font
-            setHighlightText(label, state: self._highlightState)
+            setHighlightText(label: label, state: self._highlightState)
             placeholderLabel = label
             self.addSubview(label);
         }
@@ -153,8 +153,8 @@ class UITextBox: UITextField {
     }
     
 
-    override func placeholderRectForBounds(bounds: CGRect) -> CGRect {
-        let rect = super.placeholderRectForBounds(bounds)
+    override func placeholderRect(forBounds bounds: CGRect) -> CGRect {
+        let rect = super.placeholderRect(forBounds: bounds)
         if placeholderLabel == nil {
             let label = UILabel(frame: rect)
             label.textColor = UIColor(white: 0.7, alpha: 1.0)
@@ -162,8 +162,8 @@ class UITextBox: UITextField {
             placeholderLabel = label
             addSubview(label)
         }
-        setHighlightText(placeholderLabel!, state: self._highlightState)
-        layoutPlaceholderLabel(rect,!isFirstResponder())
+        setHighlightText(label: placeholderLabel!, state: self._highlightState)
+        layoutPlaceholderLabel(rect:rect,!isFirstResponder)
         return CGRect.zero
     }
     
@@ -174,8 +174,8 @@ class UITextBox: UITextField {
             return
         }
         let size = label.sizeThatFits(rect.size)
-        let frame = left ? rect : CGRect(x: super.clearButtonRectForBounds(bounds).minX - size.width, y: rect.minY, width: size.width, height: rect.height)
-        UIView.animateWithDuration(NSTimeInterval(animateDuration), delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: UIViewAnimationOptions.CurveLinear, animations: {
+        let frame = left ? rect : CGRect(x: super.clearButtonRect(forBounds: bounds).minX - size.width, y: rect.minY, width: size.width, height: rect.height)
+        UIView.animate(withDuration: TimeInterval(animateDuration), delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: UIViewAnimationOptions.curveLinear, animations: {
             label.frame = frame;
         }, completion: nil)
     }
@@ -183,13 +183,13 @@ class UITextBox: UITextField {
     private func setHighlightText(label:UILabel, state:UITextBoxHighlightState) {
         switch state {
         case .Wrong(let errorText):
-            label.textColor = getTextColorWithHighlightColor(wrongColor)
+            label.textColor = getTextColorWithHighlightColor(color: wrongColor)
             label.text = errorText
         case .Warning(let warningText):
-            label.textColor = getTextColorWithHighlightColor(warningColor)
+            label.textColor = getTextColorWithHighlightColor(color: warningColor)
             label.text = warningText
         case .Validator(let validatorText):
-            label.textColor = getTextColorWithHighlightColor(validatorColor)
+            label.textColor = getTextColorWithHighlightColor(color: validatorColor)
             label.text = validatorText
         default:
             if let attributedPlaceholder = self.attributedPlaceholder {
@@ -197,7 +197,7 @@ class UITextBox: UITextField {
             } else {
                 label.text = self.placeholder
             }
-            label.textColor = getTextColorWithHighlightColor(getHighlightColor(_highlightState))
+            label.textColor = getTextColorWithHighlightColor(color: getHighlightColor(state: _highlightState))
         }
     }
     private func getTextColorWithHighlightColor(color:UIColor) -> UIColor {
@@ -213,7 +213,7 @@ class UITextBox: UITextField {
         case .Wrong:        return wrongColor
         case .Warning:      return warningColor
         case .Validator:    return validatorColor
-        default:            return self.isFirstResponder() ? highlightColor : self.backgroundColor ?? UIColor.whiteColor()
+        default:            return self.isFirstResponder ? highlightColor : self.backgroundColor ?? UIColor.white
         }
     }
     /*
@@ -238,23 +238,30 @@ extension UIColor {
     convenience init?(hex:String) {
         let regular:NSRegularExpression
         do {
-            regular = try NSRegularExpression(pattern: "(#?|0x)[0-9a-fA-F]{2,}", options: NSRegularExpressionOptions.CaseInsensitive)
+            regular = try NSRegularExpression(pattern: "(#?|0x)[0-9a-fA-F]{2,}", options: NSRegularExpression.Options.caseInsensitive)
         } catch { return nil }
         
-        let length = hex.startIndex.distanceTo(hex.endIndex) //distance(hex.startIndex, hex.endIndex)
         
-        guard let result = regular.firstMatchInString(hex, options: NSMatchingOptions(rawValue: 0), range: NSMakeRange(0, length)) else {
+        
+        let length = hex.count //distance(hex.startIndex, hex.endIndex)
+        
+        guard let result = regular.firstMatch(in: hex, options: NSRegularExpression.MatchingOptions(rawValue: 0), range: NSMakeRange(0, length)) else {
             print("error: hex isn't color hex value!")
             return nil
         }
         
-        let start = hex.startIndex.advancedBy(result.rangeAtIndex(1).length + result.rangeAtIndex(1).location) //advance(hex.startIndex, result.rangeAtIndex(1).length + result.rangeAtIndex(1).location)
-        let end = hex.startIndex.advancedBy(result.range.length + result.range.location) //advance(hex.startIndex, result.range.length + result.range.location)
-        let number = strtoul(hex[start..<end], nil, 16)
+        let start = hex.index(hex.startIndex, offsetBy: result.range(at: 1).length + result.range(at: 1).location)
+//        let start = hex.startIndex.advancedBy(result.rangeAtIndex(1).length + result.rangeAtIndex(1).location) //advance(hex.startIndex, result.rangeAtIndex(1).length + result.rangeAtIndex(1).location)
+        let end = hex.index(hex.startIndex, offsetBy: result.range.length + result.range.location)
+        
+//        let end = hex.startIndex.advancedBy(result.range.length + result.range.location) //advance(hex.startIndex, result.range.length + result.range.location)
+        let number = strtoul(String(hex[start..<end]), nil, 16)
         let b = CGFloat((number >>  0) & 0xFF) / 255
         let g = CGFloat((number >>  8) & 0xFF) / 255
         let r = CGFloat((number >> 16) & 0xFF) / 255
-        let a = start.distanceTo(end) > 6 ? CGFloat((number >> 24) & 0xFF) / 255 : 1 //distance(start, end) > 6 ? CGFloat((number >> 24) & 0xFF) / 255 : 1
+        let rangeCount = end.encodedOffset - start.encodedOffset
+        
+        let a = rangeCount > 6 ? CGFloat((number >> 24) & 0xFF) / 255 : 1 //distance(start, end) > 6 ? CGFloat((number >> 24) & 0xFF) / 255 : 1
         
         self.init(red: r, green: g, blue: b, alpha: a)
     }
